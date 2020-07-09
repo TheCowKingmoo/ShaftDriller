@@ -1,0 +1,23 @@
+{
+    "item.shaftdriller.firstitem": "First Item",
+
+    "block.shaftdriller.firstblock": "First Block",
+    "block.shaftdriller.miner_block": "Miner Block",
+    "block.shaftdriller.drill_core_block": "Drill Core Block",
+    "block.shaftdriller.drill_frame_block": "Drill Frame Block",
+
+    "_comment": "Creative Tabs",
+    "itemGroup.shaftdriller": "Stand Up Miner",
+
+    "message.shaftdriller.command.test": "Hello world!",
+    "message.firstblock": "This is the first block of this mod. It is directional and has an inventory. It can also generate power at about %s per tick",
+    "message.miner_block": "This is a vertical miner",
+    "message.drill_core_block": "This is the core of the drill",
+    "message.drill_frame_block": "This is a simple block used to build the drill",
+    "message.firstitem": "A very simple item. It's very simple",
+
+    "screen.shaftdriller.firstblock": "FirstBlock Screen",
+    "screen.shaftdriller.miner_block": "Miner Screen",
+    "screen.shaftdriller.drill_screen": "Drill Core Screen Screen"
+
+}

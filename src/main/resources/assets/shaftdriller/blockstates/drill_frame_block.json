@@ -1,0 +1,10 @@
+{
+  "variants": {
+    "formed=false": {
+      "model": "shaftdriller:block/drill_frame_block"
+    },
+    "formed=true": {
+      "model": "shaftdriller:block/miner_block_powered"
+    }
+  }
+}

@@ -1,0 +1,11 @@
+Args: "--task", "SRG_TO_MCP", "--input", "C:\Users\derre\.gradle\caches\modules-2\files-2.1\mcjty.theoneprobe\TheOneProbe-1.15\1.15-2.0.0-3\7a57c92d14c4d56da2496cb49f80277f920f2c04\TheOneProbe-1.15-1.15-2.0.0-3.jar", "--output", "C:\Users\derre\.gradle\caches\forge_gradle\deobf_dependencies\mcjty\theoneprobe\TheOneProbe-1.15\1.15-2.0.0-3_mapped_snapshot_20200620-1.15.1\TheOneProbe-1.15-1.15-2.0.0-3_mapped_snapshot_20200620-1.15.1.jar", "--mcp", "C:\Users\derre\.gradle\caches\forge_gradle\maven_downloader\de\oceanlabs\mcp\mcp_snapshot\20200620-1.15.1\mcp_snapshot-20200620-1.15.1.zip"
+Classpath: C:\Users\derre\.gradle\caches\forge_gradle\maven_downloader\net\minecraftforge\installertools\1.1.7\installertools-1.1.7-fatjar.jar
+WorkDir: C:\Users\derre\Desktop\Modding\M_Tut\build\_RenameSrg2Mcp_1428116081
+Main: net.minecraftforge.installertools.ConsoleTool
+====================================
+Task: SRG_TO_MCP
+Input:  C:\Users\derre\.gradle\caches\modules-2\files-2.1\mcjty.theoneprobe\TheOneProbe-1.15\1.15-2.0.0-3\7a57c92d14c4d56da2496cb49f80277f920f2c04\TheOneProbe-1.15-1.15-2.0.0-3.jar
+Output: C:\Users\derre\.gradle\caches\forge_gradle\deobf_dependencies\mcjty\theoneprobe\TheOneProbe-1.15\1.15-2.0.0-3_mapped_snapshot_20200620-1.15.1\TheOneProbe-1.15-1.15-2.0.0-3_mapped_snapshot_20200620-1.15.1.jar
+MCP:    C:\Users\derre\.gradle\caches\forge_gradle\maven_downloader\de\oceanlabs\mcp\mcp_snapshot\20200620-1.15.1\mcp_snapshot-20200620-1.15.1.zip
+Loading MCP Data
+Process complete

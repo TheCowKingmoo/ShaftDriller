@@ -1,0 +1,11 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "down": "shaftdriller:block/drill_frame_block",
+    "up": "shaftdriller:block/drill_frame_block",
+    "north": "shaftdriller:block/drill_frame_block",
+    "south": "shaftdriller:block/drill_frame_block",
+    "east": "shaftdriller:block/drill_frame_block",
+    "west": "shaftdriller:block/drill_frame_block"
+  }
+}

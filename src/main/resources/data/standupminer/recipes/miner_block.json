@@ -1,0 +1,20 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "group": "standupminer",
+  "pattern": [
+    "xxx",
+    "x#x",
+    "xxx"
+  ],
+  "key": {
+    "x": {
+      "tag": "forge:cobblestone"
+    },
+    "#": {
+      "tag": "forge:dyes/blue"
+    }
+  },
+  "result": {
+    "item": "standupminer:drill_core_block"
+  }
+}

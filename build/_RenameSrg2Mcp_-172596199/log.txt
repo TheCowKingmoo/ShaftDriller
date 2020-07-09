@@ -1,0 +1,11 @@
+Args: "--task", "SRG_TO_MCP", "--input", "C:\Users\derre\.gradle\caches\modules-2\files-2.1\mezz.jei\jei-1.15.2\6.0.0.2\2dd4eb299675a36d2d01d9a859b2fcc10f9b9bd2\jei-1.15.2-6.0.0.2.jar", "--output", "C:\Users\derre\.gradle\caches\forge_gradle\deobf_dependencies\mezz\jei\jei-1.15.2\6.0.0.2_mapped_snapshot_20200620-1.15.1\jei-1.15.2-6.0.0.2_mapped_snapshot_20200620-1.15.1.jar", "--mcp", "C:\Users\derre\.gradle\caches\forge_gradle\maven_downloader\de\oceanlabs\mcp\mcp_snapshot\20200620-1.15.1\mcp_snapshot-20200620-1.15.1.zip"
+Classpath: C:\Users\derre\.gradle\caches\forge_gradle\maven_downloader\net\minecraftforge\installertools\1.1.7\installertools-1.1.7-fatjar.jar
+WorkDir: C:\Users\derre\Desktop\Modding\M_Tut\build\_RenameSrg2Mcp_-172596199
+Main: net.minecraftforge.installertools.ConsoleTool
+====================================
+Task: SRG_TO_MCP
+Input:  C:\Users\derre\.gradle\caches\modules-2\files-2.1\mezz.jei\jei-1.15.2\6.0.0.2\2dd4eb299675a36d2d01d9a859b2fcc10f9b9bd2\jei-1.15.2-6.0.0.2.jar
+Output: C:\Users\derre\.gradle\caches\forge_gradle\deobf_dependencies\mezz\jei\jei-1.15.2\6.0.0.2_mapped_snapshot_20200620-1.15.1\jei-1.15.2-6.0.0.2_mapped_snapshot_20200620-1.15.1.jar
+MCP:    C:\Users\derre\.gradle\caches\forge_gradle\maven_downloader\de\oceanlabs\mcp\mcp_snapshot\20200620-1.15.1\mcp_snapshot-20200620-1.15.1.zip
+Loading MCP Data
+Process complete

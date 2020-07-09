@@ -1,0 +1,11 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "down": "shaftdriller:block/miner_block",
+    "up": "shaftdriller:block/miner_block",
+    "north": "shaftdriller:block/miner_block_front",
+    "south": "shaftdriller:block/miner_block",
+    "east": "shaftdriller:block/miner_block",
+    "west": "shaftdriller:block/miner_block"
+  }
+}
