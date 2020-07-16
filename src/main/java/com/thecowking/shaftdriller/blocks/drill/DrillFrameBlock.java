@@ -68,10 +68,7 @@ public class DrillFrameBlock extends MultiBlockFrameBlock {
         super.harvestBlock(worldIn, player, pos, state, te, stack);
     }
 
-    @Override
-    protected void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
-        builder.add(FORMED);
-    }
+
 
     @Override
     public void addInformation(ItemStack stack, @Nullable IBlockReader reader, List<ITextComponent> list, ITooltipFlag flags) {

@@ -371,9 +371,9 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
         if (cap.equals(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)) {
             return handler.cast();
         }
-        if (cap.equals(CapabilityEnergy.ENERGY)) {
-            return energy.cast();
-        }
+        //if (cap.equals(CapabilityEnergy.ENERGY)) {
+        //    return energy.cast();
+       // }
         return super.getCapability(cap, side);
     }
 

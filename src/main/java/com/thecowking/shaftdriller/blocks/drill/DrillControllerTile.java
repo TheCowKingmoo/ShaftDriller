@@ -12,6 +12,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.ITickableTileEntity;
+import net.minecraft.util.Direction;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
@@ -23,6 +24,7 @@ import org.apache.logging.log4j.Logger;
 import java.util.ArrayList;
 import java.util.List;
 
+import static com.thecowking.shaftdriller.blocks.MultiBlockFrameBlock.REDSTONE;
 import static com.thecowking.shaftdriller.setup.Registration.DRILL_CORE_TILE;
 
 public class DrillControllerTile extends MultiBlockControllerTile implements ITickableTileEntity {
@@ -30,6 +32,30 @@ public class DrillControllerTile extends MultiBlockControllerTile implements ITi
     private static String NBT_YMINED = "YLevelMined";
     private static String NBT_YCURRENT = "YCurrentLevel";
     private static String NBT_STUFFTOMINE = "stuffToMine";
+
+
+    private BlockPos redstoneInputBlock;
+    private BlockPos redstoneOutputBlock;
+    private BlockPos energyInputBlock;
+    private BlockPos fluidInputBlock;
+    private BlockPos fluidOutputBlock;
+
+    // if contoller is north then length = z axis
+    // and width = x axis
+    // signs are taken care of by method this is just absolute distance from controller
+
+    private int lengthOffsetEnergyIn = 0;
+    private int widthOffsetEnergyIn = 0;
+    private int lengthOffsetItemOut = 0;
+    private int widthOffsetItemOut = 0;
+    private int lengthOffsetRedstoneIn = Drill.DRILL_SIZE/2;
+    private int widthOffsetRedstoneIn = 0;
+    private int lengthOffsetRedstoneOut = Drill.DRILL_SIZE/2;
+    private int widthOffsetRedstoneOut = Drill.DRILL_SIZE/2;;
+    private int lengthOffsetFluidIn = 0;
+    private int widthOffsetFluidIn = 0;
+    private int lengthOffsetFluidOut = 0;
+    private int widthOffsetFluidOut = 0;
 
     private int yLevelMined = 1; //start at one to make sure we do not mine ourself
     private int yCurrentLevel = 0;
@@ -60,6 +86,8 @@ public class DrillControllerTile extends MultiBlockControllerTile implements ITi
         backlog = new ArrayList<>();
     }
 
+
+
     @Override
     public void tick() {
         if (world.isRemote) {
@@ -81,7 +109,9 @@ public class DrillControllerTile extends MultiBlockControllerTile implements ITi
         }
 
         //Redstone Check
-        powered = world.isBlockPowered(this.pos);
+        BlockPos redstoneBlock = getRedstoneInputBlock();
+        LOGGER.info(redstoneBlock);
+        powered = world.isBlockPowered(redstoneBlock);
 
         if(!powered)  {
             turnOff();
@@ -121,6 +151,13 @@ public class DrillControllerTile extends MultiBlockControllerTile implements ITi
     private void turnOn()  {
         running = true;
         world.setBlockState(this.pos, world.getBlockState(this.pos).with(BlockStateProperties.POWERED, true));
+        LOGGER.info("redstone out");
+        BlockPos r = getRedstoneOutputBlock();
+        LOGGER.info(r);
+        if(world.getBlockState(r).getBlock() instanceof DrillFrameBlock)  {
+            world.setBlockState(r, world.getBlockState(r).with(REDSTONE, 15));
+        }
+
     }
     /*
         turns the drill off
@@ -128,6 +165,13 @@ public class DrillControllerTile extends MultiBlockControllerTile implements ITi
     private void turnOff()  {
         if(running)  {
             world.setBlockState(this.pos, world.getBlockState(this.pos).with(BlockStateProperties.POWERED, false));
+            BlockPos r = getRedstoneOutputBlock();
+
+            if(world.getBlockState(r).getBlock() instanceof DrillFrameBlock)  {
+                world.setBlockState(r, world.getBlockState(r).with(REDSTONE, 0));
+            }
+
+
         }
         running = false;
     }
@@ -191,8 +235,6 @@ public class DrillControllerTile extends MultiBlockControllerTile implements ITi
         return drops;
     }
 
-
-
     @Override
     public void read(CompoundNBT tag) {
         yLevelMined = tag.getInt(NBT_YMINED);
@@ -229,5 +271,61 @@ public class DrillControllerTile extends MultiBlockControllerTile implements ITi
         tag.putInt("counter", counter);
         return tag;
     }
+
+
+    public BlockPos getRedstoneInputBlock()  {
+        if(redstoneInputBlock == null)  {
+            redstoneInputBlock = getBlockWithOffset(lengthOffsetRedstoneIn, widthOffsetRedstoneIn);
+        }
+        return redstoneInputBlock;
+    }
+
+    public BlockPos getRedstoneOutputBlock()  {
+        if(redstoneOutputBlock == null)  {
+            redstoneOutputBlock = getBlockWithOffset(lengthOffsetRedstoneOut, widthOffsetRedstoneOut);
+        }
+        return redstoneOutputBlock;
+    }
+
+    public BlockPos getFluidInputBlock()  {
+        if(fluidInputBlock == null)  {
+            fluidInputBlock = getBlockWithOffset(lengthOffsetFluidIn, widthOffsetFluidIn);
+        }
+        return fluidInputBlock;
+    }
+
+    public BlockPos getEnergyInputBlock()  {
+        if(energyInputBlock == null)  {
+            energyInputBlock = getBlockWithOffset(lengthOffsetEnergyIn, widthOffsetEnergyIn);
+        }
+        return energyInputBlock;
+    }
+
+
+    public BlockPos getBlockWithOffset(int length, int width)  {
+        int x = this.pos.getX();
+        int z = this.pos.getZ();
+        Direction facing = getDirectionFacing(world);
+
+        if(Direction.NORTH == facing) {
+            x += length;
+            z += width;
+        }  else if(Direction.SOUTH == facing)  {
+            x += length;
+            z -= width;
+        }  else if(Direction.WEST == facing)  {
+            x += width;
+            z += length;
+        }  else if(Direction.EAST == facing)  {
+            x -= width;
+            z += length;
+        }  else  {
+            // somehow go a bad direction
+            LOGGER.info("getRedstoneOutBlockPos got a bad direction");
+            return null;
+        }
+        return new BlockPos(x, pos.getY(), z);
+    }
+
 
 }
