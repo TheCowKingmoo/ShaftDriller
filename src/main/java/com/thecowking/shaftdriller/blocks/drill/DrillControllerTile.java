@@ -55,8 +55,6 @@ public class DrillControllerTile extends MultiBlockControllerTile implements ITi
     private int counter = 0;
     private List<ItemStack> backlog;  // a list of items that the miner could not insert into storage
 
-
-
     public DrillControllerTile() {
         super(DRILL_CORE_TILE.get());
         backlog = new ArrayList<>();

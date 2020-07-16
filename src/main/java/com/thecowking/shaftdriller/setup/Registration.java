@@ -65,6 +65,16 @@ public class Registration {
         return new MinerBlockContainer(windowId, world, pos, inv, inv.player);
     }));
 
+    //Drill MultiBlock
+    public static final RegistryObject<Drill> DRILL = BLOCKS.register("drill", Drill::new);
+    public static final RegistryObject<Item> DRILL_ITEM = ITEMS.register("drill", () -> new BlockItem(DRILL.get(), new Item.Properties().group(ModSetup.ITEM_GROUP)));
+    public static final RegistryObject<TileEntityType<DrillTile>> DRILL_TILE = TILES.register("drill", () -> TileEntityType.Builder.create(DrillTile::new, DRILL.get()).build(null));
+   // public static final RegistryObject<ContainerType<DrillContainer>> DRILL_CONTAINER = CONTAINERS.register("drill", () -> IForgeContainerType.create((windowId, inv, data) -> {
+   //     BlockPos pos = data.readBlockPos();
+   //     World world = inv.player.getEntityWorld();
+   //    return new DrillContainer(windowId, world, pos, inv, inv.player);
+   // }));
+
     //Drill Core
     public static final RegistryObject<DrillControllerBlock> DRILL_CORE_BLOCK = BLOCKS.register("drill_core_block", DrillControllerBlock::new);
     public static final RegistryObject<Item> DRILL_CORE_ITEM = ITEMS.register("drill_core_block", () -> new BlockItem(DRILL_CORE_BLOCK.get(), new Item.Properties().group(ModSetup.ITEM_GROUP)));
@@ -78,7 +88,7 @@ public class Registration {
 
 
     //Drill Frame
-    public static final RegistryObject<DrillFrameBlockBlock> DRILL_FRAME_BLOCK = BLOCKS.register("drill_frame_block", DrillFrameBlockBlock::new);
+    public static final RegistryObject<DrillFrameBlock> DRILL_FRAME_BLOCK = BLOCKS.register("drill_frame_block", DrillFrameBlock::new);
     public static final RegistryObject<Item> DRILL_FRAME_ITEM = ITEMS.register("drill_frame_block", () -> new BlockItem(DRILL_FRAME_BLOCK.get(), new Item.Properties().group(ModSetup.ITEM_GROUP)));
     public static final RegistryObject<TileEntityType<DrillFrameTile>> DRILL_FRAME_TILE = TILES.register("drill_frame_block", () -> TileEntityType.Builder.create(DrillFrameTile::new, DRILL_FRAME_BLOCK.get()).build(null));
 

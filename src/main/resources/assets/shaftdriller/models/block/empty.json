@@ -1,0 +1,11 @@
+{
+  "parent": "block/cube",
+  "textures": {
+    "down": "shaftdriller:block/empty",
+    "up": "shaftdriller:block/empty",
+    "north": "shaftdriller:block/empty",
+    "south": "shaftdriller:block/empty",
+    "east": "shaftdriller:block/empty",
+    "west": "shaftdriller:block/empty"
+  }
+}

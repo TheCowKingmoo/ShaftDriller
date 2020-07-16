@@ -1,48 +1,32 @@
 {
   "variants": {
-    "facing=down,powered=false": {
-      "model": "shaftdriller:block/drill_core_block",
-      "x": 90
-    },
-    "facing=up,powered=false": {
-      "model": "shaftdriller:block/drill_core_block",
-      "x": -90
-    },
-    "facing=north,powered=false": {
-      "model": "shaftdriller:block/drill_core_block"
-    },
-    "facing=south,powered=false": {
-      "model": "shaftdriller:block/drill_core_block",
-      "y": 180
-    },
-    "facing=west,powered=false": {
-      "model": "shaftdriller:block/drill_core_block",
-      "y": 270
-    },
-    "facing=east,powered=false": {
-      "model": "shaftdriller:block/drill_core_block",
+    "facing=north,formed=true": {
+      "model": "shaftdriller:block/drill",
       "y": 90
     },
-    "facing=down,powered=true": {
-      "model": "shaftdriller:block/drill_core_block",
-      "x": 90
+    "facing=south,formed=true": {
+      "model": "shaftdriller:block/drill",
+      "y": 270
     },
-    "facing=up,powered=true": {
-      "model": "shaftdriller:block/drill_core_block",
-      "x": -90
+    "facing=west,formed=true": {
+      "model": "shaftdriller:block/drill"
     },
-    "facing=north,powered=true": {
+    "facing=east,formed=true": {
+      "model": "shaftdriller:block/drill",
+      "y": 90
+    },
+    "facing=north,formed=false": {
       "model": "shaftdriller:block/drill_core_block"
     },
-    "facing=south,powered=true": {
+    "facing=south,formed=false": {
       "model": "shaftdriller:block/drill_core_block",
       "y": 180
     },
-    "facing=west,powered=true": {
+    "facing=west,formed=false": {
       "model": "shaftdriller:block/drill_core_block",
       "y": 270
     },
-    "facing=east,powered=true": {
+    "facing=east,formed=false": {
       "model": "shaftdriller:block/drill_core_block",
       "y": 90
     }

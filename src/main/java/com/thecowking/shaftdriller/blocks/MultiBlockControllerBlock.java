@@ -7,11 +7,13 @@ import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
 import net.minecraft.block.material.Material;
 import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.ActionResultType;
+import net.minecraft.util.Direction;
 import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.BlockRayTraceResult;
@@ -55,7 +57,7 @@ public class MultiBlockControllerBlock extends Block implements IMultiBlockContr
             TileEntity tileEntity = worldIn.getTileEntity(pos);
             if (tileEntity instanceof IMultiBlockControllerTile) {
                 IMultiBlockControllerTile controllerTile = (IMultiBlockControllerTile) tileEntity;
-                if(controllerTile.isFormed(worldIn))  {
+                if(controllerTile.isFormed(worldIn) )  {
                     controllerTile.openGUI(worldIn, pos, player, controllerTile);
                 }  else if(controllerTile.isValidMultiBlockFormer(player.getHeldItem(hand).getItem())) {
                     LOGGER.info("no gui- attempt to form");
@@ -63,7 +65,8 @@ public class MultiBlockControllerBlock extends Block implements IMultiBlockContr
                     // attempts to form the multi-block
                     controllerTile.tryToFormMultiBlock(worldIn, pos);
                 }  else  {
-                    return ActionResultType.FAIL;
+                    controllerTile.openGUI(worldIn, pos, player, controllerTile);
+
                 }
             } else {
                 throw new IllegalStateException("Our named container provider is missing!");
@@ -89,5 +92,19 @@ public class MultiBlockControllerBlock extends Block implements IMultiBlockContr
         super.harvestBlock(worldIn, player, pos, state, te, stack);
     }
 
+    @Nullable
+    @Override
+    public BlockState getStateForPlacement(BlockItemUseContext context) {
+        LOGGER.info("finding dir");
+        Direction[] dir = context.getNearestLookingDirections();
+        for(int i = 0 ; i < dir.length; i++)  {
+            if(!(dir[i] == Direction.DOWN || dir[i] == Direction.UP))  {
+                LOGGER.info(dir[i].getOpposite());
+                return getDefaultState().with(BlockStateProperties.FACING, dir[i].getOpposite());
+            }
+        }
+        LOGGER.info("return null");
+        return null;
+    }
 }
 

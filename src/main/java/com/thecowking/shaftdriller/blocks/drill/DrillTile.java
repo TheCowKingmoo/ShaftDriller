@@ -4,6 +4,7 @@ package com.thecowking.shaftdriller.blocks.drill;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.Direction;
+import net.minecraft.util.math.AxisAlignedBB;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
@@ -16,12 +17,11 @@ import org.apache.logging.log4j.Logger;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import static com.thecowking.shaftdriller.setup.Registration.DRILL_FRAME_TILE;
+import static com.thecowking.shaftdriller.setup.Registration.DRILL_TILE;
 
-public class DrillFrameTile extends TileEntity  {
+public class DrillTile extends TileEntity  {
+
     private static final Logger LOGGER = LogManager.getLogger();
-
-
 
     private static String NBT_CX = "CX";
     private static String NBT_CY = "CY";
@@ -29,9 +29,15 @@ public class DrillFrameTile extends TileEntity  {
 
     private BlockPos controllerPos;
 
-    public DrillFrameTile() {
-        super(DRILL_FRAME_TILE.get());
+    public DrillTile() {
+        super(DRILL_TILE.get());
     }
+
+    @Override
+    public AxisAlignedBB getRenderBoundingBox()  {return new AxisAlignedBB(getPos().getX(), getPos().getY(), getPos().getZ(),
+            getPos().getX()+25, getPos().getY()+25, getPos().getZ()+25);
+    }
+
     public BlockPos getController()  {return controllerPos;}
     public void setController(BlockPos pos)  {controllerPos = pos;}
 
@@ -46,25 +52,12 @@ public class DrillFrameTile extends TileEntity  {
         return null;
     }
 
-
-    public void setupMultiBlock(BlockPos posIn)  {
-        world.setBlockState(this.pos, this.getBlockState().with(DrillFrameBlock.FORMED, true));
-        setController(posIn);
-    }
     public void destroyMultiBlock()  {
         if(world.isRemote)  {
             return;
         }
-        controllerPos = null;
-        setFormed(world, false);
+        getControllerTile().breakMultiBlock(world);
     }
-    public void setFormed(World worldIn, boolean b)  {worldIn.setBlockState(this.pos, this.getBlockState().with(DrillFrameBlock.FORMED, b));}
-
-
-
-
-
-
 
     @Override
     public void read(CompoundNBT tag) {
@@ -73,7 +66,6 @@ public class DrillFrameTile extends TileEntity  {
             controllerPos = new BlockPos(tag.getInt(NBT_CX), tag.getInt(NBT_CY), tag.getInt(NBT_CZ));
         }
     }
-
 
     @Override
     public CompoundNBT write(CompoundNBT tag) {

@@ -1,0 +1,5 @@
+{
+  "loader": "forge:obj",
+  "model": "shaftdriller:models/block/drill.obj",
+  "flip-v": true
+}

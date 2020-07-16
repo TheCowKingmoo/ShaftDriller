@@ -20,9 +20,9 @@ import net.minecraft.world.World;
 import javax.annotation.Nullable;
 import java.util.List;
 
-public class DrillFrameBlockBlock extends MultiBlockFrameBlock {
+public class DrillFrameBlock extends MultiBlockFrameBlock {
 
-    public DrillFrameBlockBlock() {super();}
+    public DrillFrameBlock() {super();}
 
     @SuppressWarnings("deprecation")
     @Override

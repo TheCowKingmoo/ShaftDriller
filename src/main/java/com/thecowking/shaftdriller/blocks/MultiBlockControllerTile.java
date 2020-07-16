@@ -1,27 +1,42 @@
 package com.thecowking.shaftdriller.blocks;
 
+import com.thecowking.shaftdriller.ShaftDriller;
 import com.thecowking.shaftdriller.blocks.drill.Drill;
-import com.thecowking.shaftdriller.blocks.drill.DrillFrameBlockBlock;
+import com.thecowking.shaftdriller.blocks.drill.DrillControllerBlock;
+import com.thecowking.shaftdriller.blocks.drill.DrillFrameBlock;
 import com.thecowking.shaftdriller.blocks.drill.DrillFrameTile;
+import com.thecowking.shaftdriller.setup.Registration;
+import com.thecowking.shaftdriller.setup.Singleton;
 import com.thecowking.shaftdriller.tools.CustomEnergyStorage;
+import com.thecowking.shaftdriller.tools.SDFakePlayer;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.Blocks;
+import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.ItemUseContext;
 import net.minecraft.item.Items;
 import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.TileEntity;
 import net.minecraft.tileentity.TileEntityType;
 import net.minecraft.util.Direction;
+import net.minecraft.util.Hand;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.BlockRayTraceResult;
+import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.World;
+import net.minecraftforge.common.ForgeHooks;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.CapabilityEnergy;
 import net.minecraftforge.energy.IEnergyStorage;
+import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
 import net.minecraftforge.items.ItemStackHandler;
-import org.antlr.v4.runtime.misc.Pair;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -61,18 +76,134 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
     public IItemHandler getItemHandler()  {return itemHandler;}
 
     public boolean isFormed(World worldIn)  {return worldIn.getBlockState(pos).get(Drill.FORMED);}
+    public Direction getDirectionFacing(World worldIn)  {return worldIn.getBlockState(pos).get(BlockStateProperties.FACING);}
     public void setFormed(World worldIn, boolean b)  {worldIn.setBlockState(pos, getBlockState().with(Drill.FORMED, b));}
 
     /*
     controls forming of multi block. calls cleanup methods if failure
  */
     public void tryToFormMultiBlock(World worldIn, BlockPos pos) {
-        boolean complted = formMultiBlock(worldIn, pos);
-        if(!complted)  {
-            cleanUpFrame();
+        if(formMultiBlock())  {
+            createMultiBlock();
+            setFormed(worldIn, true);
         }  else  {
-            formFrame();
+            cleanUpFrame();
         }
+    }
+
+    /*
+      used to attempt to form a multi block structure
+     */
+
+    public boolean formMultiBlock()  {
+        if(world.isRemote)  {return false;}
+
+        // check that we have the proper materials to construct
+        if(itemHandler.getStackInSlot(0).isEmpty())  {
+            LOGGER.info("stack is empty");
+            return false;
+        }
+
+        if(!(Block.getBlockFromItem(itemHandler.getStackInSlot(0).getItem()) instanceof DrillFrameBlock))  {
+            LOGGER.info("not the right block");
+            return false;
+        }
+        if(itemHandler.getStackInSlot(0).getCount() < 43 )  {
+            LOGGER.info("too low of a count");
+            return false;
+        }
+
+        BlockPos startPos = findStartPosition();
+        LOGGER.info(startPos);
+
+        // Check for blocks sitting in 5x5x5 cube in and around controller.
+        // as this starts from the NorthWestern corner and is a cube, all we need to do
+        // is increment XZ values to get the entire cube
+        for(int i = 0; i < 5; i++)  {
+            for(int j = 0; j < 5; j++)  {
+                for(int k = 0; k < 5; k++)  {
+                    BlockPos currentPos = new BlockPos(startPos.getX()+i, startPos.getY()+j, startPos.getZ()+k);
+                    Block currentBlock = world.getBlockState(currentPos).getBlock();
+                    BlockState currentState = world.getBlockState(currentPos);
+                    if( currentState.hasTileEntity() || !(currentState.isAir(world, currentPos))) {
+                        LOGGER.info("is not air");
+                        LOGGER.info(currentBlock);
+                        if(!(isCorrectFrameBlocK(currentPos)))  {
+                            LOGGER.info("is not frame");
+                            if(!(currentPos.equals(this.pos)))  {
+                                LOGGER.info("Incorrect Block at");
+                                LOGGER.info(currentPos);
+                                LOGGER.info(pos);
+                                return false;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        multiBlockTracker = new ArrayList<>();
+        // If we are here then we know there is nothing but air+controller in the 5x5x5 cube
+        // build frame
+        for(int y = 0; y < 5; y++)  {
+            for(int x = 0; x < 5; x++)  {
+                for(int z = 0; z < 5; z++)  {
+                    if(((z == 0 || x == 0 || z==4 || x == 4)) && (y == 0 || y == 4)  ||
+                            (z==0 && x==0) || (z==4 && x==4) || (z == 0 && x == 4) || (z == 4 && x == 0))  {
+                        BlockPos currentPos = new BlockPos(startPos.getX()+x, startPos.getY()+y, startPos.getZ()+z);
+                        if(world.getBlockState(currentPos).getBlock() == Blocks.AIR)  {
+                            SDFakePlayer fakePlayer = (SDFakePlayer) Singleton.getFakePlayer(world, currentPos);
+                            fakePlayer.placeBlock(world, currentPos, itemHandler.getStackInSlot(0));
+                            TileEntity te = world.getTileEntity(currentPos);
+                            if(te != null)  {
+                                if(te instanceof DrillFrameTile)  {
+                                    multiBlockTracker.add((DrillFrameTile) te);
+                                }  else  {
+                                    LOGGER.info("TE WAS NOT FRAME");
+                                }
+                            }  else  {
+                                LOGGER.info("TE WAS NULL");
+                            }
+
+                        }
+                    }
+
+
+                }
+            }
+        }
+        return true;
+    }
+
+
+    public boolean isCorrectFrameBlocK (BlockPos currentPos)  {
+        return (world.getBlockState(currentPos).getBlock() instanceof DrillFrameBlock);
+    }
+
+    /*
+      West = -x
+      East = +X
+      North = -Z
+      South = +Z
+      this function will return the North-Western corner of the multi block to be formed
+     */
+
+    public BlockPos findStartPosition()  {
+        Direction facing = getDirectionFacing(world);
+        BlockPos start = null;
+        if(facing == Direction.NORTH)  {
+            start = new BlockPos(pos.getX()-(Drill.DRILL_SIZE/2), pos.getY(), pos.getZ());
+        } else if(facing == Direction.SOUTH)  {
+            start = new BlockPos(pos.getX()-(Drill.DRILL_SIZE/2), pos.getY(), pos.getZ()-(Drill.DRILL_SIZE)+1);
+        } else if(facing == Direction.WEST)  {
+            start = new BlockPos(pos.getX(), pos.getY(), pos.getZ()-(Drill.DRILL_SIZE/2));
+        } else if(facing == Direction.EAST)  {
+            start = new BlockPos(pos.getX()-(Drill.DRILL_SIZE)+1, pos.getY(), pos.getZ()-(Drill.DRILL_SIZE/2));
+        }  else  {
+            LOGGER.info("findStartPosition got a null direction!");
+            return null;
+        }
+        return start;
     }
 
     @Override
@@ -86,109 +217,6 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
         frame and run down that line as well and so on until we "turn" four times
      */
 
-    public boolean formMultiBlock(World worldIn, BlockPos pos) {
-        if (worldIn.isRemote) {
-            return false;
-        }
-        int x = pos.getX();
-        int y = pos.getY();
-        int z = pos.getZ();
-        BlockPos neighbor1 = new BlockPos(x + 1, y, z);
-        BlockPos neighbor2 = new BlockPos(x - 1, y, z);
-        BlockPos neighbor3 = new BlockPos(x, y, z + 1);
-        BlockPos neighbor4 = new BlockPos(x, y, z - 1);
-
-        // sued to keep track of what block we are on
-        BlockPos current = null;
-        multiBlockTracker = new ArrayList<>();
-
-
-        // used to indicate what direction to move
-        // 1 = +x, 2 = -x, 3 = +z, 4 = -z
-        int move = 0;
-
-        // chain to find where to start
-        if(worldIn.getBlockState(neighbor1).getBlock() instanceof DrillFrameBlockBlock) {
-            current = neighbor1;
-            move = 1;
-        }  else if(worldIn.getBlockState(neighbor2).getBlock() instanceof DrillFrameBlockBlock) {
-            current = neighbor2;
-            move = 2;
-        }  else if(worldIn.getBlockState(neighbor3).getBlock() instanceof DrillFrameBlockBlock) {
-            current = neighbor3;
-            move = 3;
-        }  else if(worldIn.getBlockState(neighbor4).getBlock() instanceof DrillFrameBlockBlock) {
-            current = neighbor4;
-            move = 4;
-        }  else  {
-            // cannot find a frame block next to controller
-            LOGGER.info("first bit fail");
-            return false;
-        }
-
-        next = current;
-
-        // run down the direction until we do not hit a frame block
-        Pair<BlockPos, Integer> pair = moveUpLength(worldIn, current, move, false);
-        current = pair.a;
-        // mark down the first corner of the multi block
-        int currentX = current.getX();
-        int currentZ = current.getZ();
-
-        if(pair.b == -1)  {
-            // move up passed an error
-            LOGGER.info("first move up fail");
-            return false;
-        }
-
-        // we started from controller so we need to add second half + size of controller
-        int length = 2 * pair.b + 1;
-
-        // loop to find the remaining sides
-        for(int i = 0; i < 3; i++)  {
-            LOGGER.info("loop turn + moveup");
-            LOGGER.info(i);
-
-            move = turnDirection(worldIn, current, move, length);
-            if(move == -1)  {
-                LOGGER.info("turn couldn't find another block ");
-                return false;
-            }
-            pair = moveUpLength(worldIn, current, move, false);
-            current = pair.a;
-            int checkLength = pair.b;
-
-            if(length != checkLength)  {
-                // the length calc'd earlier does not match this sides length
-                LOGGER.info("length was incorrect");
-                LOGGER.info(checkLength);
-                LOGGER.info(length);
-                return false;
-            }
-
-            //find largest corner value to calc where to start mining
-            if(currentX <= current.getX() && currentZ <= current.getZ())  {
-                currentX = current.getX();
-                currentZ = current.getZ();
-            }
-
-        }
-
-        move = turnDirection(worldIn, current, move, length);
-        pair = moveUpLength(worldIn, current, move, false);
-        int checkLength = pair.b;
-
-        if(checkLength == (length - 1) / 2)  {
-            cornerX = currentX;
-            cornerZ = currentZ;
-            setFormed(worldIn, true);
-            LOGGER.info("multiblock formed");
-            return true;
-        }  else  {
-            //last leg failed
-            return false;
-        }
-    }
 
     private void cleanUpFrame()  {
         if(multiBlockTracker != null)  {
@@ -200,7 +228,7 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
         multiBlockTracker = null;
     }
 
-    private void formFrame()  {
+    private void createMultiBlock()  {
         if(multiBlockTracker != null)  {
             for(int i = 0; i < multiBlockTracker.size(); i++)  {
                 DrillFrameTile current = multiBlockTracker.get(i);
@@ -208,117 +236,6 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
             }
         }
         multiBlockTracker = null;
-    }
-
-    // checks to make sure the sides are not equal to frame block
-    private boolean checkSides(World worldIn, BlockPos current, int move)  {
-        BlockPos findDirection = null;
-        if(move == 1 || move == 2)  {
-            findDirection = new BlockPos(current.getX(), current.getY(), current.getZ()+1);
-            if(worldIn.getBlockState(findDirection).getBlock() instanceof DrillFrameBlockBlock)  {
-                return false;
-            }
-            findDirection = new BlockPos(current.getX(), current.getY(), current.getZ()-1);
-            if(worldIn.getBlockState(findDirection).getBlock() instanceof DrillFrameBlockBlock)  {
-                return false;
-            }
-        }  else if(move ==3 || move ==4) {
-            findDirection = new BlockPos(current.getX()+1, current.getY(), current.getZ());
-            if(worldIn.getBlockState(findDirection).getBlock() instanceof DrillFrameBlockBlock)  {
-                return false;
-            }
-            findDirection = new BlockPos(current.getX()-1, current.getY(), current.getZ());
-            if(worldIn.getBlockState(findDirection).getBlock() instanceof DrillFrameBlockBlock)  {
-                return false;
-            }
-        }
-        return true;
-    }
-
-
-    /*
-        When we wish to go up a new side we use this function to find out what direction to head.
-        This will simply check out a passed in blockpos's neighbors and return that into move
-     */
-    private int turnDirection(World worldIn, BlockPos current, int move, int length)  {
-        LOGGER.info(move);
-        BlockPos findDirection = null;
-        // go along the z axis as we know the turn has to be on the x if we come from z
-        if(move == 1 || move == 2)  {
-            findDirection = new BlockPos(current.getX(), current.getY(), current.getZ()+1);
-            LOGGER.info(findDirection);
-            if(worldIn.getBlockState(findDirection).getBlock() instanceof DrillFrameBlockBlock)  {
-                return 3;
-            }
-            findDirection = new BlockPos(current.getX(), current.getY(), current.getZ()-1);
-            LOGGER.info(findDirection);
-            if(worldIn.getBlockState(findDirection).getBlock() instanceof DrillFrameBlockBlock)  {
-                return 4;
-            }
-            // go along the x axis
-        }  else if(move ==3 || move ==4) {
-            findDirection = new BlockPos(current.getX()+1, current.getY(), current.getZ());
-            LOGGER.info(findDirection);
-            if(worldIn.getBlockState(findDirection).getBlock() instanceof DrillFrameBlockBlock)  {
-                return 1;
-            }
-            findDirection = new BlockPos(current.getX()-1, current.getY(), current.getZ());
-            LOGGER.info(findDirection);
-            if(worldIn.getBlockState(findDirection).getBlock() instanceof DrillFrameBlockBlock)  {
-                return 2;
-            }
-        }
-        return -1;
-    }
-
-    /*
-        Travels in a line until the next element is not a frame block or we hit max size.
-        return will be the last block in the line and the length of the side
-     */
-    private Pair<BlockPos, Integer> moveUpLength(World worldIn, BlockPos current, int move, boolean lastLeg)  {
-        int sizeLength = 0;
-        int sideCount = 0;
-        BlockPos old = current;
-        while(worldIn.getBlockState(current).getBlock() instanceof DrillFrameBlockBlock && sizeLength < MAX_MULTIBLOCK_SIZE)  {
-            // set the neighbor of the block
-
-            old = current;
-
-            switch (move)  {
-                case 1:
-                    current = new BlockPos(current.getX()+1, current.getY(), current.getZ());
-                    break;
-                case 2:
-                    current = new BlockPos(current.getX()-1, current.getY(), current.getZ());
-                    break;
-                case 3:
-                    current = new BlockPos(current.getX(), current.getY(), current.getZ()+1);
-                    break;
-                case 4:
-                    current = new BlockPos(current.getX(), current.getY(), current.getZ()-1);
-                    break;
-                default:
-                    if(lastLeg)  {
-                        return new Pair<BlockPos, Integer>(current, move);
-                    }
-                    return new Pair<BlockPos, Integer>(current, -1);
-            }
-            // check if there are no frame blocks along the line
-            if(sizeLength != 0)  {
-                if(!(checkSides(worldIn, current, move)))  {
-                    sideCount++;
-                }
-            }
-            DrillFrameTile oldTile = ((DrillFrameTile)worldIn.getTileEntity(old));
-            multiBlockTracker.add(oldTile);
-            oldTile.setNext(current);
-            sizeLength++;
-        }
-        // check if we found an extra frame block along one of the sides
-        if(sideCount > 1)  {
-            return new Pair<BlockPos, Integer>(old, -1);
-        }
-        return new Pair<BlockPos, Integer>(old, sizeLength);
     }
 
 
@@ -347,12 +264,24 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
             return;
         }
         setFormed(worldIn, false);
-        BlockPos current = next;
-        DrillFrameTile currentFrame = ((DrillFrameTile)worldIn.getTileEntity(current));
-        while(currentFrame != null)  {
-            current = currentFrame.getNext();
-            currentFrame.destroyMultiBlock();
-            currentFrame = ((DrillFrameTile)worldIn.getTileEntity(current));
+
+        BlockPos startPos = findStartPosition();
+        for(int y = 0; y < 5; y++)  {
+            for(int x = 0; x < 5; x++)  {
+                for(int z = 0; z < 5; z++)  {
+                    if(((z == 0 || x == 0 || z==4 || x == 4)) && (y == 0 || y == 4)  ||
+                            (z==0 && x==0) || (z==4 && x==4) || (z == 0 && x == 4) || (z == 4 && x == 0))  {
+                        BlockPos currentPos = new BlockPos(startPos.getX()+x, startPos.getY()+y, startPos.getZ()+z);
+                        TileEntity te = world.getTileEntity(currentPos);
+                        if(te != null && te instanceof DrillFrameTile)  {
+                            DrillFrameTile drillFrameTile = (DrillFrameTile) te;
+                            drillFrameTile.destroyMultiBlock();
+                        }
+                    }
+
+
+                }
+            }
         }
     }
 

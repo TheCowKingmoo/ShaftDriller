@@ -27,8 +27,4 @@ public class DrillControllerBlock extends MultiBlockControllerBlock {
         list.add(new TranslationTextComponent("message.drill_core_block"));
     }
 
-
-
-
-
 }
