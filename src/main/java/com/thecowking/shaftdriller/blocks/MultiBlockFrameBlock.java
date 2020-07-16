@@ -1,5 +1,6 @@
 package com.thecowking.shaftdriller.blocks;
 
+import com.thecowking.shaftdriller.blocks.drill.Drill;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
 import net.minecraft.block.SoundType;
@@ -8,6 +9,9 @@ import net.minecraft.state.BooleanProperty;
 import net.minecraft.state.IntegerProperty;
 import net.minecraft.state.StateContainer;
 import net.minecraft.state.properties.BlockStateProperties;
+import net.minecraft.util.Direction;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.IBlockReader;
 import net.minecraftforge.common.ToolType;
 
 public class MultiBlockFrameBlock extends Block implements IMultiBlockFrameBlock {
@@ -28,4 +32,19 @@ public class MultiBlockFrameBlock extends Block implements IMultiBlockFrameBlock
         builder.add(FORMED);
         builder.add(REDSTONE);
     }
+
+    @SuppressWarnings("deprecation")
+    @Override
+    public int getWeakPower(BlockState blockState, IBlockReader blockAccess, BlockPos pos, Direction side) {
+        return blockState.get(REDSTONE);
+    }
+
+    @SuppressWarnings("deprecation")
+    @Deprecated
+    public boolean canProvidePower(BlockState state) {
+        return true;
+    }
+
+
+
 }

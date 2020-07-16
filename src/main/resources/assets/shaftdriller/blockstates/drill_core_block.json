@@ -13,8 +13,9 @@
     },
     "facing=east,formed=true": {
       "model": "shaftdriller:block/drill",
-      "y": 90
+      "y": 180
     },
+
     "facing=north,formed=false": {
       "model": "shaftdriller:block/drill_core_block"
     },

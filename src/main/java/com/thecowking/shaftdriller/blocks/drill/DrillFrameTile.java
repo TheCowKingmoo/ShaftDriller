@@ -9,6 +9,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.CapabilityEnergy;
+import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
 import net.minecraftforge.items.CapabilityItemHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -81,6 +82,9 @@ public class DrillFrameTile extends TileEntity  {
         }
     }
 
+    public BlockPos getBlockPos()  {return pos;}
+
+
 
     @Override
     public CompoundNBT write(CompoundNBT tag) {
@@ -101,11 +105,15 @@ public class DrillFrameTile extends TileEntity  {
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
         DrillControllerTile drillControllerTile = getControllerTile();
         if(drillControllerTile != null)  {
-            if (cap.equals(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)) {
+            if (cap.equals(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY) && job == Drill.JOB_ITEM_IN) {
                 return drillControllerTile.handler.cast();
             }
             if (cap.equals(CapabilityEnergy.ENERGY) && job == Drill.JOB_ENERGY_IN) {
                 return drillControllerTile.energy.cast();
+            }
+
+            if (cap.equals(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY) && job == Drill.JOB_FLUID_OUT) {
+                return drillControllerTile.fluidTank.cast();
             }
         }
         return super.getCapability(cap, side);

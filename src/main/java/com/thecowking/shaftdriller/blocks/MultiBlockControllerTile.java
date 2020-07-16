@@ -8,6 +8,7 @@ import com.thecowking.shaftdriller.blocks.drill.DrillFrameTile;
 import com.thecowking.shaftdriller.setup.Registration;
 import com.thecowking.shaftdriller.setup.Singleton;
 import com.thecowking.shaftdriller.tools.CustomEnergyStorage;
+import com.thecowking.shaftdriller.tools.CustomFluidStorage;
 import com.thecowking.shaftdriller.tools.SDFakePlayer;
 import net.minecraft.block.Block;
 import net.minecraft.block.BlockState;
@@ -33,6 +34,10 @@ import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.common.util.LazyOptional;
 import net.minecraftforge.energy.CapabilityEnergy;
 import net.minecraftforge.energy.IEnergyStorage;
+import net.minecraftforge.fluids.FluidStack;
+import net.minecraftforge.fluids.capability.CapabilityFluidHandler;
+import net.minecraftforge.fluids.capability.templates.FluidHandlerItemStack;
+import net.minecraftforge.fluids.capability.templates.FluidTank;
 import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.items.CapabilityItemHandler;
 import net.minecraftforge.items.IItemHandler;
@@ -53,8 +58,7 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
     private static final String NBT_CORNERX = "cornerX";
     private static final String NBT_CORNERZ = "cornerZ";
 
-    private ItemStackHandler itemHandler = createHandler();
-    protected CustomEnergyStorage energyStorage = createEnergy();
+    private int tankSize = 1000;
 
     private List<DrillFrameTile> multiBlockTracker;
     private BlockPos next;
@@ -64,9 +68,39 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
     protected int cornerX;
     protected int cornerZ;
 
-    // Never create lazy optionals in getCapability. Always place them as fields in the tile entity:
+    /*
+
+     */
+
+    private int lengthOffsetEnergyIn = -1*Drill.DRILL_SIZE/2;
+    private int widthOffsetEnergyIn = 0;
+    private int lengthOffsetItemOut = -1*Drill.DRILL_SIZE/2;;
+    private int widthOffsetItemOut = Drill.DRILL_SIZE/2;
+    private int lengthOffsetRedstoneIn = Drill.DRILL_SIZE/2;
+    private int widthOffsetRedstoneIn = 0;
+    private int lengthOffsetRedstoneOut = Drill.DRILL_SIZE/2;
+    private int widthOffsetRedstoneOut = Drill.DRILL_SIZE/2;;
+    private int lengthOffsetFluidIn = -1*Drill.DRILL_SIZE/2;
+    private int widthOffsetFluidIn = Drill.DRILL_SIZE-1;
+    private int lengthOffsetFluidOut = 0;
+    private int widthOffsetFluidOut = Drill.DRILL_SIZE-1;
+
+
+    private BlockPos redstoneInputBlock;
+    private BlockPos redstoneOutputBlock;
+    private BlockPos energyInputBlock;
+    private BlockPos fluidInputBlock;
+    private BlockPos fluidOutputBlock;
+    private BlockPos itemInputBlock;
+
+
+    private ItemStackHandler itemHandler = createHandler();
+    protected CustomEnergyStorage energyStorage = createEnergy();
+
+    public LazyOptional<CustomFluidStorage> fluidTank = LazyOptional.of(this::createTank);
     public LazyOptional<IItemHandler> handler = LazyOptional.of(() -> itemHandler);
     public LazyOptional<IEnergyStorage> energy = LazyOptional.of(() -> energyStorage);
+
 
     public MultiBlockControllerTile(TileEntityType<?> tileEntityTypeIn) {
         super(tileEntityTypeIn);
@@ -86,10 +120,45 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
         if(formMultiBlock())  {
             createMultiBlock();
             setFormed(worldIn, true);
+
+            LOGGER.info("assign energy job");
+            assignJob(getDrillFrameTile(getEnergyInputBlockPos()), Drill.JOB_ENERGY_IN);
+            LOGGER.info("assign fluid in job");
+            assignJob(getDrillFrameTile(getFluidInputBlockPos()), Drill.JOB_FLUID_IN);
+            LOGGER.info("assign fluid out job");
+            assignJob(getDrillFrameTile(getFluidOutputBlockPos()), Drill.JOB_FLUID_OUT);
+            LOGGER.info("assign item in job");
+            assignJob(getDrillFrameTile(getItemInputBlockPos()), Drill.JOB_ITEM_IN);
+
         }  else  {
             cleanUpFrame();
         }
     }
+
+    public DrillFrameTile getDrillFrameTile(BlockPos posIn)  {
+        LOGGER.info("checking pos " + posIn);
+        TileEntity te = world.getTileEntity(posIn);
+        if(te != null)  {
+            if( te instanceof DrillFrameTile)  {
+                return (DrillFrameTile) te;
+            }  else  {
+                LOGGER.info("getDrillFrameTile got a non DrillFrameTile at" + te.getPos());
+            }
+        }  else {
+          LOGGER.info("getDrillFrameTile got a non entity pos");
+        }
+        return null;
+    }
+
+    public void assignJob(DrillFrameTile dFT, String job)  {
+        if(dFT == null)  {
+            LOGGER.info("DrillFrameTile gotten is null!");
+        }  else  {
+            LOGGER.info("Block " + dFT.getBlockPos() + " has been assigned " + job);
+            dFT.setJob(job);
+        }
+    }
+
 
     /*
       used to attempt to form a multi block structure
@@ -167,8 +236,6 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
 
                         }
                     }
-
-
                 }
             }
         }
@@ -218,8 +285,6 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
         After if comes to the end of the line it will then look at neighbors for the next
         frame and run down that line as well and so on until we "turn" four times
      */
-
-
     private void cleanUpFrame()  {
         if(multiBlockTracker != null)  {
             for(int i = 0; i < multiBlockTracker.size(); i++)  {
@@ -240,7 +305,6 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
         multiBlockTracker = null;
     }
 
-
     /*
         returns if the held item used to right click on controller is valid to form multiblock
      */
@@ -251,7 +315,6 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
         }
         return false;
     }
-
 
     /*
         use neighbors to destroy multiblock
@@ -280,8 +343,6 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
                             drillFrameTile.destroyMultiBlock();
                         }
                     }
-
-
                 }
             }
         }
@@ -306,11 +367,6 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
         markDirty();
         return leftovers;
     }
-
-
-
-
-
 
     @Override
     public void read(CompoundNBT tag) {
@@ -354,6 +410,10 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
         };
     }
 
+    protected CustomFluidStorage createTank() {
+        return new CustomFluidStorage(tankSize, this);
+    }
+
 
     private CustomEnergyStorage createEnergy() {
         return new CustomEnergyStorage(10000, 1000) {
@@ -364,17 +424,93 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
         };
     }
 
-
     @Nonnull
     @Override
     public <T> LazyOptional<T> getCapability(@Nonnull Capability<T> cap, @Nullable Direction side) {
         if (cap.equals(CapabilityItemHandler.ITEM_HANDLER_CAPABILITY)) {
-            return handler.cast();
+           return handler.cast();
         }
+        //if (cap.equals(CapabilityFluidHandler.FLUID_HANDLER_CAPABILITY)) {
+        //    return this.fluidTank.cast();
+
+        //}
         //if (cap.equals(CapabilityEnergy.ENERGY)) {
         //    return energy.cast();
        // }
         return super.getCapability(cap, side);
+    }
+
+    public BlockPos getItemInputBlockPos()  {
+        if(itemInputBlock == null)  {
+            itemInputBlock = getBlockWithOffset(lengthOffsetItemOut, widthOffsetItemOut);
+        }
+        return itemInputBlock;
+    }
+
+    public BlockPos getRedstoneInputBlockPos()  {
+        if(redstoneInputBlock == null)  {
+            redstoneInputBlock = getBlockWithOffset(lengthOffsetRedstoneIn, widthOffsetRedstoneIn);
+        }
+        return redstoneInputBlock;
+    }
+
+    public BlockPos getRedstoneOutputBlockPos()  {
+        if(redstoneOutputBlock == null)  {
+            redstoneOutputBlock = getBlockWithOffset(lengthOffsetRedstoneOut, widthOffsetRedstoneOut);
+        }
+        return redstoneOutputBlock;
+    }
+
+    public BlockPos getFluidInputBlockPos()  {
+        if(fluidInputBlock == null)  {
+            fluidInputBlock = getBlockWithOffset(lengthOffsetFluidIn, widthOffsetFluidIn);
+        }
+        return fluidInputBlock;
+    }
+
+    public BlockPos getFluidOutputBlockPos()  {
+        if(fluidOutputBlock == null)  {
+            fluidOutputBlock = getBlockWithOffset(lengthOffsetFluidOut, widthOffsetFluidOut);
+        }
+        return fluidOutputBlock;
+    }
+
+    public BlockPos getEnergyInputBlockPos()  {
+        if(energyInputBlock == null)  {
+            energyInputBlock = getBlockWithOffset(lengthOffsetEnergyIn, widthOffsetEnergyIn);
+        }
+        return energyInputBlock;
+    }
+
+    public BlockPos getBlockWithOffset(int length, int width)  {
+        int x = this.pos.getX();
+        int z = this.pos.getZ();
+        Direction facing = getDirectionFacing(world);
+
+        if(Direction.NORTH == facing) {
+            x += length;
+            z += width;
+        }  else if(Direction.SOUTH == facing)  {
+            x += length;
+            z -= width;
+        }  else if(Direction.WEST == facing)  {
+            x += width;
+            z += length;
+        }  else if(Direction.EAST == facing)  {
+            x -= width;
+            z += length;
+        }  else  {
+            // somehow go a bad direction
+            LOGGER.info("getRedstoneOutBlockPos got a bad direction");
+            return null;
+        }
+        return new BlockPos(x, pos.getY(), z);
+    }
+
+    public void setDirty(boolean b)  {
+        if(b)  {
+            markDirty();
+        }
     }
 
 

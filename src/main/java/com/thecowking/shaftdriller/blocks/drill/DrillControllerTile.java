@@ -34,28 +34,12 @@ public class DrillControllerTile extends MultiBlockControllerTile implements ITi
     private static String NBT_STUFFTOMINE = "stuffToMine";
 
 
-    private BlockPos redstoneInputBlock;
-    private BlockPos redstoneOutputBlock;
-    private BlockPos energyInputBlock;
-    private BlockPos fluidInputBlock;
-    private BlockPos fluidOutputBlock;
 
     // if contoller is north then length = z axis
     // and width = x axis
     // signs are taken care of by method this is just absolute distance from controller
 
-    private int lengthOffsetEnergyIn = 0;
-    private int widthOffsetEnergyIn = 0;
-    private int lengthOffsetItemOut = 0;
-    private int widthOffsetItemOut = 0;
-    private int lengthOffsetRedstoneIn = Drill.DRILL_SIZE/2;
-    private int widthOffsetRedstoneIn = 0;
-    private int lengthOffsetRedstoneOut = Drill.DRILL_SIZE/2;
-    private int widthOffsetRedstoneOut = Drill.DRILL_SIZE/2;;
-    private int lengthOffsetFluidIn = 0;
-    private int widthOffsetFluidIn = 0;
-    private int lengthOffsetFluidOut = 0;
-    private int widthOffsetFluidOut = 0;
+
 
     private int yLevelMined = 1; //start at one to make sure we do not mine ourself
     private int yCurrentLevel = 0;
@@ -109,8 +93,7 @@ public class DrillControllerTile extends MultiBlockControllerTile implements ITi
         }
 
         //Redstone Check
-        BlockPos redstoneBlock = getRedstoneInputBlock();
-        LOGGER.info(redstoneBlock);
+        BlockPos redstoneBlock = getRedstoneInputBlockPos();
         powered = world.isBlockPowered(redstoneBlock);
 
         if(!powered)  {
@@ -152,10 +135,12 @@ public class DrillControllerTile extends MultiBlockControllerTile implements ITi
         running = true;
         world.setBlockState(this.pos, world.getBlockState(this.pos).with(BlockStateProperties.POWERED, true));
         LOGGER.info("redstone out");
-        BlockPos r = getRedstoneOutputBlock();
+        BlockPos r = getRedstoneOutputBlockPos();
         LOGGER.info(r);
         if(world.getBlockState(r).getBlock() instanceof DrillFrameBlock)  {
             world.setBlockState(r, world.getBlockState(r).with(REDSTONE, 15));
+        }  else  {
+            LOGGER.info("RO not a DrillFrameBlock");
         }
 
     }
@@ -165,7 +150,7 @@ public class DrillControllerTile extends MultiBlockControllerTile implements ITi
     private void turnOff()  {
         if(running)  {
             world.setBlockState(this.pos, world.getBlockState(this.pos).with(BlockStateProperties.POWERED, false));
-            BlockPos r = getRedstoneOutputBlock();
+            BlockPos r = getRedstoneOutputBlockPos();
 
             if(world.getBlockState(r).getBlock() instanceof DrillFrameBlock)  {
                 world.setBlockState(r, world.getBlockState(r).with(REDSTONE, 0));
@@ -272,60 +257,6 @@ public class DrillControllerTile extends MultiBlockControllerTile implements ITi
         return tag;
     }
 
-
-    public BlockPos getRedstoneInputBlock()  {
-        if(redstoneInputBlock == null)  {
-            redstoneInputBlock = getBlockWithOffset(lengthOffsetRedstoneIn, widthOffsetRedstoneIn);
-        }
-        return redstoneInputBlock;
-    }
-
-    public BlockPos getRedstoneOutputBlock()  {
-        if(redstoneOutputBlock == null)  {
-            redstoneOutputBlock = getBlockWithOffset(lengthOffsetRedstoneOut, widthOffsetRedstoneOut);
-        }
-        return redstoneOutputBlock;
-    }
-
-    public BlockPos getFluidInputBlock()  {
-        if(fluidInputBlock == null)  {
-            fluidInputBlock = getBlockWithOffset(lengthOffsetFluidIn, widthOffsetFluidIn);
-        }
-        return fluidInputBlock;
-    }
-
-    public BlockPos getEnergyInputBlock()  {
-        if(energyInputBlock == null)  {
-            energyInputBlock = getBlockWithOffset(lengthOffsetEnergyIn, widthOffsetEnergyIn);
-        }
-        return energyInputBlock;
-    }
-
-
-    public BlockPos getBlockWithOffset(int length, int width)  {
-        int x = this.pos.getX();
-        int z = this.pos.getZ();
-        Direction facing = getDirectionFacing(world);
-
-        if(Direction.NORTH == facing) {
-            x += length;
-            z += width;
-        }  else if(Direction.SOUTH == facing)  {
-            x += length;
-            z -= width;
-        }  else if(Direction.WEST == facing)  {
-            x += width;
-            z += length;
-        }  else if(Direction.EAST == facing)  {
-            x -= width;
-            z += length;
-        }  else  {
-            // somehow go a bad direction
-            LOGGER.info("getRedstoneOutBlockPos got a bad direction");
-            return null;
-        }
-        return new BlockPos(x, pos.getY(), z);
-    }
 
 
 }
