@@ -60,7 +60,7 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
     private BlockPos next;
     private boolean stopFlag = false;
 
-    //holds the "highest" value corner of the multi block
+    //holds the "lowsest" value corner of the multi block
     protected int cornerX;
     protected int cornerZ;
 
@@ -203,6 +203,8 @@ public class MultiBlockControllerTile extends TileEntity implements IMultiBlockC
             LOGGER.info("findStartPosition got a null direction!");
             return null;
         }
+        cornerX = start.getX();
+        cornerZ = start.getZ();
         return start;
     }
 

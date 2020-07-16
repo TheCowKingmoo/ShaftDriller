@@ -137,13 +137,13 @@ public class DrillControllerTile extends MultiBlockControllerTile implements ITi
      */
     private BlockPos calcNextMineBlock()  {
         int currentY = this.pos.getY() - yLevelMined;
-        int currentX = getMineStartX() - (yCurrentLevel % (2*SIZE_OF_DRILL + 1));
-        int currentZ = getMineStartZ() - (yCurrentLevel / (2*SIZE_OF_DRILL + 1));
+        int currentX = getMineStartX() + (yCurrentLevel % (2*SIZE_OF_DRILL + 1));
+        int currentZ = getMineStartZ() + (yCurrentLevel / (2*SIZE_OF_DRILL + 1));
         return new BlockPos(currentX, currentY, currentZ);
     }
 
-    private int getMineStartX()  { return cornerX - 1; }
-    private int getMineStartZ()  { return  cornerZ - 1; }
+    private int getMineStartX()  { return cornerX+1; }
+    private int getMineStartZ()  { return  cornerZ+1; }
 
     private List<ItemStack> mine(boolean realBlock)  {
         if(!running)  {
